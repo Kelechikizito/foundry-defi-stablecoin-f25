@@ -113,7 +113,7 @@ I built this project to strengthen my understanding of smart contract developmen
 
 ## FlowChart
 
-[FlowChart](Flowchart.png)
+![FlowChart](./Flowchart.png)
 
 ---
 
