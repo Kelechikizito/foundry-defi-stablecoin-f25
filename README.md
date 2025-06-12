@@ -30,9 +30,9 @@
       5. Price Deviation Checks
    5. Dectralized Governance Model ✅
 5. Do Revision From the first Lesson and make sure you understand everything
-6. Check out Lens Protocol
-7. Improve the ReadMe
-8. Read the Security Preaparation and understand everything
-9.  Research Lens protocol
-10. Smart Contract Audit Preparation
-11. Do the Exercises
+6. Do the Exercises
+7. Check out Lens Protocol
+8. Improve the ReadMe
+9. Read the Security Preaparation and understand everything
+10. Research Lens protocol
+11. Smart Contract Audit Preparation

@@ -5,6 +5,8 @@
 // What are our invariants?
 // 1. The total supply of DSC should be less than the total value of collateral.
 // 2. Getter View functions should never revert <- evergreen invariant.
+// 3. Collateral Deposits and minted Can't Be Negative
+// 4. Collateral Tokens Are Registered
 
 pragma solidity ^0.8.18;
 
@@ -84,5 +86,27 @@ contract Invariants is StdInvariant, Test {
         dscE.getTokenAmountFromUsd(wbtc, totalWbtcDeposited);
         dscE.getUsdValue(weth, totalWethDeposited);
         dscE.getUsdValue(wbtc, totalWbtcDeposited);
+    }
+
+    function invariant_collateralDepositsAndMintedCantBeNegative() public view {
+        uint256 wethDeposited = dscE.getCollateralDeposited(address(handler), weth);
+        uint256 wbtcDeposited = dscE.getCollateralDeposited(address(handler), wbtc);
+        uint256 dscMinted = dscE.getDscMinted(address(handler));
+
+        assert(wethDeposited >= 0);
+        assert(wbtcDeposited >= 0);
+        assert(dscMinted >= 0);
+    }
+
+    function invariant_allCollateralTokensAreRegistered() public view {
+        uint256 totalCollateralTokens = dscE.getCollateralTokensLength();
+
+        for (uint256 i = 0; i < totalCollateralTokens; i++) {
+            address collateralToken = dscE.getCollateralToken(i);
+            address priceFeed = dscE.getPriceFeed(collateralToken);
+            console.log("Collateral token: ", collateralToken);
+            console.log("Price feed: ", priceFeed);
+            assert(priceFeed != address(0));
+        }
     }
 }
