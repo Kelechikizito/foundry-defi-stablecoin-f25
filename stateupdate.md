@@ -122,8 +122,7 @@ If you want, I can also give you:
 5. Do Revision From the first Lesson and make sure you understand everything ✅
 6. Improve the ReadMe ✅
 7. Do the Exercises
-8. Check out Lens Protocol
-9. Read the Security Preaparation and understand everything
-10. Research Lens protocol
-11. Smart Contract Audit Preparation
-12. 
+8. Read the Security Preaparation and understand everything
+9.  Research Lens protocol
+10. Smart Contract Audit Preparation
+11. 
