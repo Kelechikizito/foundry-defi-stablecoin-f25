@@ -29,10 +29,10 @@
       4. Dynamic Timeout Adjustment ✅
       5. Price Deviation Checks
    5. Dectralized Governance Model ✅
-5. Do Revision From the first Lesson and make sure you understand everything
-6. Do the Exercises
-7. Check out Lens Protocol
-8. Improve the ReadMe
+5. Do Revision From the first Lesson and make sure you understand everything ✅
+6. Improve the ReadMe
+7. Do the Exercises
+8. Check out Lens Protocol
 9. Read the Security Preaparation and understand everything
 10. Research Lens protocol
 11. Smart Contract Audit Preparation

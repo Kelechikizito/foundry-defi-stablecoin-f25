@@ -246,6 +246,21 @@ contract DSCEngineTest is Test {
     //mintDsc Tests          ////
     /////////////////////////////
 
+    function testRevertsIfMintedDscBreaksHealthFactor() public {
+        (, int256 price,,,) = MockV3Aggregator(ethUsdPriceFeed).latestRoundData();
+        uint256 amountToMint =
+            (AMOUNT_COLLATERAL * (uint256(price) * dscE.getAdditionalFeedPrecision())) / dscE.getPrecision();
+        console.log("amountToMint: %s", amountToMint);
+        vm.startPrank(USER);
+        ERC20Mock(weth).approve(address(dscE), AMOUNT_COLLATERAL);
+
+        uint256 expectedHealthFactor =
+            dscE.calculateHealthFactor(amountToMint, dscE.getUsdValue(weth, AMOUNT_COLLATERAL));
+        vm.expectRevert(abi.encodeWithSelector(DSCEngine.DSCEngine__BreaksHealthFactor.selector, expectedHealthFactor));
+        dscE.depositCollateralAndMintDSCTokens(weth, AMOUNT_COLLATERAL, amountToMint);
+        vm.stopPrank();
+    }
+
     function testRevertsIfMintsZeroDsc() public depositedCollateral {
         vm.startPrank(USER);
         vm.expectRevert(DSCEngine.DSCEngine__NeedsMoreThanZero.selector);
