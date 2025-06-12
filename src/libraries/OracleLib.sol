@@ -25,11 +25,15 @@ library OracleLib {
     {
         (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound) =
             priceFeed.latestRoundData();
-
-        uint256 secondsSince = block.timestamp - updatedAt;
-        if (secondsSince > TIMEOUT) {
+        if (updatedAt == 0 || answeredInRound < roundId) {
             revert OracleLib__StalePrice();
         }
+        uint256 secondsSince = block.timestamp - updatedAt;
+        if (secondsSince > TIMEOUT) revert OracleLib__StalePrice();
         return (roundId, answer, startedAt, updatedAt, answeredInRound);
+    }
+
+    function getTimeout(AggregatorV3Interface /*priceFeed*/ ) external pure returns (uint256) {
+        return TIMEOUT;
     }
 }
