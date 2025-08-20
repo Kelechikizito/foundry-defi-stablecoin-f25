@@ -32,7 +32,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {AggregatorV3Interface} from "@chainlink/contracts/v0.8/interfaces/AggregatorV3Interface.sol";
 import {OracleLib} from "src/libraries/OracleLib.sol";
 
-/*
+/**
  * @title DSCEngine
  * @author Billiionaire Kelechi Kizito Ugwu
  * The system is designed to be as minimal as possible, and have the tokens maintain a 1 token == $1 peg.
@@ -49,7 +49,6 @@ import {OracleLib} from "src/libraries/OracleLib.sol";
  * for minting and redeeming DSC, as well as depositing and withdrawing collateral.
  * @notice This contract is based on the MakerDAO DSS system
  */
-
 contract DSCEngine is ReentrancyGuard {
     ///////////////////
     //   Errors   /////
@@ -160,7 +159,7 @@ contract DSCEngine is ReentrancyGuard {
         if (!success) revert DSCEngine__TransferFailed();
     }
 
-    /*
+    /**
      * @notice this function burns DSC and redeems underlying collateral in one transaction.
      * @param tokenCollateralAddress The address of the token to redeem as collateral
      * @param amountCollateral The amount of collateral to redeem

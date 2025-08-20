@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.18;
 
-import {Test, console} from "forge-std/Test.sol";
+import {Test, console, console2} from "forge-std/Test.sol";
 import {DeployDSC} from "script/DeployDSC.s.sol";
 import {DecentralizedStableCoin} from "src/DecentralizedStableCoin.sol";
 import {DSCEngine} from "src/DSCEngine.sol";
@@ -219,6 +219,15 @@ contract DSCEngineTest is Test {
         vm.stopPrank();
     }
 
+    function testRedeemCollateralForDsc() public depositedCollateralAndMintDsce {
+        uint256 redeemAmount = 5 ether;
+
+        vm.startPrank(USER);
+        dsc.approve(address(dscE), AMOUNT_DSC_TO_BURN);
+        dscE.redeemCollateralForDsc(weth, redeemAmount, AMOUNT_DSC_TO_BURN);
+        vm.stopPrank();
+    }
+
     function testCanGetCollateralTokens() public depositedCollateralAndMintDsce {
         address[] memory tokens = dscE.getCollateralTokens();
         // console.log(tokens);
@@ -433,6 +442,7 @@ contract DSCEngineTest is Test {
         // Assert: 10 WETH * $2000 = $20,000 = 20,000e18
         uint256 expectedUsdValue = 20000e18;
         assertEq(collateralValue, expectedUsdValue);
+        console2.log("this is the value returned", dscE.getAccountCollateralValue(USER));
     }
 
     function testGetCollateralTokensReturnsCorrectList() public view {
@@ -486,6 +496,10 @@ contract DSCEngineTest is Test {
         assertEq(dscE.getMinHealthFactor(), MIN_HEALTH_FACTOR);
     }
 
+    function testGetCollateralToken() public view {
+        assertEq(dscE.getCollateralToken(0), weth);
+    }
+
     /////////////////////////////
     // Edge Case Tests         //
     /////////////////////////////
@@ -499,9 +513,81 @@ contract DSCEngineTest is Test {
         vm.stopPrank();
         assertEq(dscE.getCollateralDeposited(USER, weth), minimalCollateral);
     }
+
+    // function testDepositMinimalCollateralReverts() public {
+    //     uint256 minimalCollateral = 1 wei;
+    //     vm.startPrank(USER);
+    //     ERC20Mock(weth).mint(USER, minimalCollateral);
+    //     ERC20Mock(weth).approve(address(dscE), minimalCollateral);
+    //     vm.expectRevert(DSCEngine.DSCEngine__TransferFailed.selector);
+    //     dscE.depositCollateral(weth, minimalCollateral);
+    //     vm.stopPrank();
+    //     // assertEq(dscE.getCollateralDeposited(USER, weth), minimalCollateral);
+    // }
+
+    /////////////////////////////
+    // HelperConfig Tests      //
+    /////////////////////////////
+    // function testGetSepoliaEthConfig() public view {
+    //     HelperConfig.NetworkConfig memory configT = config.getSepoliaEthConfig();
+    //     assertEq(configT.wethUsdPriceFeed, 0x694AA1769357215DE4FAC081bf1f309aDC325306);
+    //     assertEq(configT.wbtcUsdPriceFeed, 0x1b44F3514812d835EB1BDB0acB33d3fA3351Ee43);
+    //     assertEq(configT.weth, 0xdd13E55209Fd76AfE204dBda4007C227904f0a81);
+    //     assertEq(configT.wbtc, 0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063);
+    // }
+
+    function testLiquidateRevertsIfHealthFactorNotImproved() public {
+        // Arrange: User deposits collateral and mints near max DSC
+        uint256 amountCollateral = 10 ether;
+        uint256 amountToMint = 10000 ether; // Max mintable at initial price of $2000 (20000 USD collateral * 50% = 10000 DSC)
+
+        vm.startPrank(USER);
+        ERC20Mock(weth).approve(address(dscE), amountCollateral);
+        dscE.depositCollateralAndMintDSCTokens(weth, amountCollateral, amountToMint);
+        vm.stopPrank();
+
+        // Drop price to $1100 to make collateral USD = 11000, ratio = 1.1, health factor = 0.55 < 1
+        int256 newPrice = 1100e8;
+        MockV3Aggregator(ethUsdPriceFeed).updateAnswer(newPrice);
+
+        // Verify user is liquidatable
+        uint256 userHealthFactor = dscE.getHealthFactor(USER);
+        assertLt(userHealthFactor, MIN_HEALTH_FACTOR);
+
+        // Setup liquidator: Deposit collateral, mint some DSC, approve
+        uint256 liquidatorCollateral = 10 ether;
+        uint256 liquidatorMint = 5000 ether; // Enough for partial liquidation
+
+        ERC20Mock(weth).mint(LIQUIDATOR, liquidatorCollateral);
+
+        vm.startPrank(LIQUIDATOR);
+        ERC20Mock(weth).approve(address(dscE), liquidatorCollateral);
+        dscE.depositCollateralAndMintDSCTokens(weth, liquidatorCollateral, liquidatorMint);
+        dsc.approve(address(dscE), type(uint256).max);
+        vm.stopPrank();
+
+        // Act/Assert: Attempt partial liquidation, expect revert because health factor doesn't improve
+        uint256 debtToCover = 100 ether; // Partial, small relative to total debt
+
+        vm.prank(LIQUIDATOR);
+        vm.expectRevert(DSCEngine.DSCEngine__HealthFactorNotImproved.selector);
+        dscE.liquidate(weth, USER, debtToCover);
+    }
+
+    // function testSepoliaConfig() public view {
+    //     HelperConfig.NetworkConfig memory sepoliaConfig = config.getSepoliaEthConfig();
+
+    //     assertEq(sepoliaConfig.wethUsdPriceFeed, 0x694AA1769357215DE4FAC081bf1f309aDC325306);
+    //     assertEq(sepoliaConfig.wbtcUsdPriceFeed, 0x1b44F3514812d835EB1BDB0acB33d3fA3351Ee43);
+    //     assertEq(sepoliaConfig.weth, 0xdd13E55209Fd76AfE204dBda4007C227904f0a81);
+    //     assertEq(sepoliaConfig.wbtc, 0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063);
+    //     // deployerKey not asserted as it depends on env
+    // }
 }
 
 // WRITE MORE GETTER FUNCTIONS IN THE DSCEngine.sol CONTRACT ✅
 // WRITE MORE TESTS FOR THE DSCEngine.sol CONTRACT ✅
 
 // I JUST FOUND A BUG WHILE TESTING, THE BUG IS THAT THE CONTRACT ALLOWS US TO LIQUIDATE AN UNAPPROVED COLLATERAL I HAVE FIXED THIS ISSUE IN THE DSCEngine.sol CONTRACT BY ADDING THE NOTALLOWEDTOKEN MODIFIER
+
+// THE TRANSFER FAILED AND MINT FAILED ERROR WOULDN'T HIT
